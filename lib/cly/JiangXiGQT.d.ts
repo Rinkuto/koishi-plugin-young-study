@@ -1,6 +1,6 @@
 import { GQT } from "./GQT";
 import { BindType, Result, StudyUser } from "../Types";
-export declare class JiangXiCYL extends GQT {
+export declare class JiangXiGQT extends GQT {
     private readonly TW_URL;
     private readonly CURRENT_URL;
     bind(config: string[]): Promise<BindType>;
@@ -16,5 +16,6 @@ export declare class JiangXiCYL extends GQT {
     getLastClassImage(url: string): string;
     private getLatestClass;
     search(config: string[]): Promise<string[]>;
+    batchStudy(studyUsers: StudyUser[]): Promise<Result[]>;
     private readonly firstLevel;
 }

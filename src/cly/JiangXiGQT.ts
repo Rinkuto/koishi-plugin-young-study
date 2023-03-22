@@ -2,7 +2,7 @@ import {GQT} from "./GQT";
 import {Quester} from "koishi";
 import {BindType, JiangXiCYLType, Result, StudyUser} from "../Types";
 
-export class JiangXiCYL extends GQT {
+export class JiangXiGQT extends GQT {
 
   private readonly TW_URL = 'http://www.jxqingtuan.cn/pub/vol/config/organization?pid=';
 
@@ -124,6 +124,35 @@ export class JiangXiCYL extends GQT {
       return [`没有下级团委了哦`];
     }
     return resp.result.map((value) => value.title);
+  }
+
+
+  async batchStudy(studyUsers: StudyUser[]): Promise<Result[]> {
+    const lastClass = await this.getLatestClass();
+    const result: Result[] = [];
+    for (const studyUser of studyUsers) {
+      const response = await this.http.post<Result>(this.JOIN_URL + studyUser.openId, {
+        cardNo: studyUser.name,
+        nid: studyUser.pid,
+        accessToken: studyUser.openId,
+        course: lastClass.id,
+      });
+      if (response.status === 200) {
+        result.push({
+          image: this.getLastClassImage(lastClass.uri),
+          result: response.result,
+          status: 200,
+          message: `你已经完成了${lastClass.title}的学习`
+        });
+      } else {
+        result.push({
+          result: response.result,
+          status: response.status,
+          message: response.message,
+        })
+      }
+    }
+    return result;
   }
 
 

@@ -1,15 +1,13 @@
-import {Database} from "koishi";
+import {Database, Query} from "koishi";
 import {StudyUser} from "../Types";
 import {logger} from "koishi-plugin-gocqhttp";
 
 export class DataBaseUtil {
 
 
-  public static async getStudyUser(qqId: string, database: Database): Promise<StudyUser[]> {
+  public static async getStudyUser(query: Query<any>, database: Database): Promise<StudyUser[]> {
     const res = [];
-    const users = await database.get('study_user', {
-      qqId: qqId,
-    });
+    const users = await database.get('study_user', query);
     for (let user of users) {
       res.push(user);
     }
@@ -32,7 +30,7 @@ export class DataBaseUtil {
   }
 
   public static async hasStudyUser(qqId: string, database: Database): Promise<boolean> {
-    const user = await this.getStudyUser(qqId, database);
+    const user = await this.getStudyUser({qqId: qqId}, database);
     return user.length !== 0;
   }
 }
