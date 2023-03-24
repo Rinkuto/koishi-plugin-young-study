@@ -48,13 +48,18 @@ export function apply(ctx: Context) {
         await send(session, '暂不支持该省份');
         return;
       }
-      const pid = await gqt.bind(option.slice(1, option.length - 1));
+      const openId = getRandomOpenId();
+      const isNew = !(await DataBaseUtil.hasStudyUser(session.userId, ctx.database));
+
+      const pid = await gqt.bind(option.slice(1, option.length - 1),
+        isNew ? openId : (await DataBaseUtil.getStudyUser({qqId: session.userId}, ctx.database))[0].openId
+        , option[option.length - 1], isNew);
       if (pid.result !== undefined) {
         await DataBaseUtil.setStudyUser({
           qqId: session.userId,
           pid: pid.result,
           name: option[option.length - 1],
-          openId: getRandomOpenId(),
+          openId: openId,
           province: option[0]
         }, ctx.database).then(() => {
           send(session, '设置成功');
@@ -76,7 +81,6 @@ export function apply(ctx: Context) {
       }
       const gqt = GQTContent.get(user[0].province);
       const result = await gqt.study(user[0]);
-      console.log(result.image)
       if (result.status === 200) {
         await send(session, result.message);
         await send(session, result.image);
@@ -121,16 +125,18 @@ export function apply(ctx: Context) {
 
 // 随机生成openid
 const getRandomOpenId = () => {
-  const char = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
+  const char = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+    'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w',
+    'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K',
     'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W',
     'X', 'Y', 'Z', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '-'];
-  let openid = 'oWtp';
-  for (let i = 0; i < 14; i++) {
-    openid += char[Random.int(0, char.length)];
+  let openid = 'omLPU';
+  for (let i = 0; i < 13; i++) {
+    openid += char[Random.int(0, char.length - 1)];
   }
   openid += '-';
   for (let i = 0; i < 9; i++) {
-    openid += char[Random.int(0, char.length)];
+    openid += char[Random.int(0, char.length - 1)];
   }
   return openid;
 }

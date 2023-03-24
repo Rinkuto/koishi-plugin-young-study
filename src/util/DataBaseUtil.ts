@@ -26,7 +26,20 @@ export class DataBaseUtil {
         province: studyUser.province,
       });
     }
+  }
 
+  public static async insertStudyUser(studyUser: StudyUser, database: Database): Promise<void> {
+    await database.create('study_user', studyUser);
+  }
+
+  public static async updateStudyUser(studyUser: StudyUser, database: Database): Promise<void> {
+    await database.set('study_user', {
+      qqId: studyUser.qqId,
+    }, {
+      pid: studyUser.pid,
+      name: studyUser.name,
+      province: studyUser.province,
+    });
   }
 
   public static async hasStudyUser(qqId: string, database: Database): Promise<boolean> {

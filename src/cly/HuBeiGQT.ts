@@ -1,13 +1,45 @@
 import {GQT} from "./GQT";
 import {BindType, Result, StudyUser} from "../Types";
 import {JSDOM} from 'jsdom';
+import {HttpUtil} from "../util/HttpUtil";
 
 export class HuBeiGQT extends GQT {
-  async bind(config: string[]): Promise<BindType> {
-    return {
-      result: config.join('-'),
-      message: 'success',
+  private readonly SAVE_DOOR_URL = 'https://cp.fjg360.cn/index.php';
+  private readonly BIND_USER_URL = 'https://api.fjg360.cn/index.php';
+
+  async bind(config: string[], openId: string, name: string, isNew: boolean): Promise<BindType> {
+    const user: StudyUser = {
+      name: name, openId: openId, pid: config.join('-'), province: "", qqId: ""
     };
+    const resp = await this.bindUser(user, isNew);
+    if (resp.code == 1) {
+      return {
+        result: config.join('-'),
+        message: 'success',
+      };
+    } else {
+      return {
+        result: undefined,
+        message: resp.msg,
+      }
+    }
+  }
+
+  private bindUser = async (study: StudyUser, isNew: boolean): Promise<{
+    is_sucess: string,
+    uid: string,
+    code: number,
+    msg: string,
+  }> => {
+    const params = this.getParams('bind_user', study);
+    params.lesson_name = await this.getLatestClass().then(value => value.title);
+    params.is_edit = isNew ? 0 : 1;
+    return await this.http.get<{
+      is_sucess: string,
+      uid: string,
+      code: number,
+      msg: string,
+    }>(HttpUtil.setParams(this.BIND_USER_URL, params));
   }
 
   // 最新的青年大学习地址
@@ -31,8 +63,6 @@ export class HuBeiGQT extends GQT {
     }
   }
 
-  private STUDY_URL = 'https://cp.fjg360.cn/index.php';
-
   async study(study: StudyUser): Promise<Result> {
     const lastClass = await this.getLatestClass();
     if (lastClass === undefined) {
@@ -42,7 +72,7 @@ export class HuBeiGQT extends GQT {
         result: study.name,
       }
     }
-    const params = this.getParams(study);
+    const params = this.getParams('save_door', study);
     params.lesson_name = lastClass.title;
 
     const resp = await this.resp(params);
@@ -62,33 +92,40 @@ export class HuBeiGQT extends GQT {
     }
   }
 
-  private async resp(params: any): Promise<{
+  private async resp(params: object): Promise<{
     is_sucess?: number,
     code?: number,
   }> {
-    return await this.http.get(this.STUDY_URL, {
-      params,
-    });
+    return await this.http.get(HttpUtil.setParams(this.SAVE_DOOR_URL, params));
   }
 
-  private getParams(study: StudyUser) {
-    const pos: string[] = study.pid.split('-');
-    return {
-      openid: study.openId,
+  private getParams(a: "get_members" | "bind_user" | "save_door", study: StudyUser): any {
+    const params = {
       m: 'vote',
       c: 'index',
-      a: 'save_door',
-      sessionId: undefined,
-      imgTextId: undefined,
-      ip: undefined,
-      username: study.name,
-      phone: '未知',
-      num: 10,
-      lesson_name: '',
-      city: pos[0], //学校
-      danwei2: pos[1], // 班级
-      danwei: pos[2], // 学院
-    };
+      a: a,
+      openid: study.openId,
+    }
+    if (a === 'get_members') {
+      return params;
+    } else {
+      const pos: string[] = study.pid.split('-');
+      params['ip'] = undefined;
+      params['sessionId'] = undefined;
+      params['imgTextId'] = undefined;
+      params['username'] = study.name;
+      params['phone'] = '未知';
+      params['city'] = pos[0];
+      params['danwei'] = pos[1];
+      params['danwei2'] = pos[2];
+      params['lesson_name'] = '';
+      if (a === 'save_door') {
+        params['num'] = 10;
+      } else if (a === 'bind_user') {
+        params['is_edit'] = 1;
+      }
+    }
+    return params;
   }
 
   private CURRENT_IMAGE_URL = 'https://h5.cyol.com/special/daxuexi/';
@@ -107,7 +144,7 @@ export class HuBeiGQT extends GQT {
     const image = this.getImageUrl(lastClass.code);
     const result: Result[] = [];
     for (let user of study) {
-      const params = this.getParams(user);
+      const params = this.getParams('save_door', user);
       params.lesson_name = lastClass.title;
       const resp = await this.resp(params);
       if (resp?.is_sucess === 1) {
@@ -127,5 +164,4 @@ export class HuBeiGQT extends GQT {
     }
     return result;
   }
-
 }

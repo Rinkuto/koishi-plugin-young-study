@@ -3,7 +3,7 @@ import { BindType, Result, StudyUser } from "../Types";
 export declare class JiangXiGQT extends GQT {
     private readonly TW_URL;
     private readonly CURRENT_URL;
-    bind(config: string[]): Promise<BindType>;
+    bind(config: string[], openId: string, name: string, isNew: boolean): Promise<BindType>;
     /**
      * 获取下级团委Id
      * @param areaId 团委Id

@@ -1,5 +1,4 @@
 import {GQT} from "./GQT";
-import {Quester} from "koishi";
 import {BindType, JiangXiCYLType, Result, StudyUser} from "../Types";
 
 export class JiangXiGQT extends GQT {
@@ -8,7 +7,7 @@ export class JiangXiGQT extends GQT {
 
   private readonly CURRENT_URL = 'http://www.jxqingtuan.cn/pub/vol/volClass/current';
 
-  public async bind(config: string[]): Promise<BindType> {
+  public async bind(config: string[], openId:string, name: string,isNew:boolean): Promise<BindType> {
     let areaId = this.firstLevel.get(config[0]);
     if (areaId) {
       for (let i = 1; i < config.length; i++) {
